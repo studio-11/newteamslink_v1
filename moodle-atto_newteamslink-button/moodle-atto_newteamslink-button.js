@@ -1,0 +1,219 @@
+YUI.add('moodle-atto_newteamslink-button', function (Y, NAME) {
+
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * @module moodle-atto_newteamslink-button
+ */
+
+/**
+ * Atto newteamslink plugin.
+ *
+ * @namespace M.atto_newteamslink
+ * @class button
+ * @extends M.editor_atto.EditorPlugin
+ */
+
+Y.namespace('M.atto_newteamslink').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
+    initializer: function() {
+        this.addButton({
+            callback: function() {
+                // Obtenir l'éditeur
+                var host = this.get('host');
+                
+                // S'assurer que l'éditeur a le focus
+                host.focus();
+                
+                // Code HTML Teams à insérer
+                var teamsHtml = '<div class="teamsSection">\n' +
+                    '    <script>\n' +
+                    '        (function() {\n' +
+                    '            function getCurrentTextMediaId() {\n' +
+                    '                let element = document.currentScript;\n' +
+                    '                while (element) {\n' +
+                    '                    if (element.tagName === \'LI\' && element.id && element.id.startsWith(\'module-\')) {\n' +
+                    '                        const id = element.id.replace(\'module-\', \'\');\n' +
+                    '                        console.log(\'ID Text&Media trouvé:\', id);\n' +
+                    '                        return id;\n' +
+                    '                    }\n' +
+                    '                    element = element.parentElement;\n' +
+                    '                }\n' +
+                    '                console.log(\'Aucun ID Text&Media trouvé\');\n' +
+                    '                return null;\n' +
+                    '            }\n' +
+                    '\n' +
+                    '            function getCourseId() {\n' +
+                    '                const url = window.location.href;\n' +
+                    '                const match = url.match(/[?&]id=(\\d+)/);\n' +
+                    '                const id = match ? match[1] : null;\n' +
+                    '                console.log(\'Course ID trouvé:\', id);\n' +
+                    '                return id;\n' +
+                    '            }\n' +
+                    '\n' +
+                    '            function formatDate(date) {\n' +
+                    '                return date.getUTCFullYear() + \'-\' +\n' +
+                    '                    String(date.getUTCMonth() + 1).padStart(2, \'0\') + \'-\' +\n' +
+                    '                    String(date.getUTCDate()).padStart(2, \'0\') + \' \' +\n' +
+                    '                    String(date.getUTCHours()).padStart(2, \'0\') + \':\' +\n' +
+                    '                    String(date.getUTCMinutes()).padStart(2, \'0\') + \':\' +\n' +
+                    '                    String(date.getUTCSeconds()).padStart(2, \'0\');\n' +
+                    '            }\n' +
+                    '\n' +
+                    '            function getUserInfo() {\n' +
+                    '                // Tenter de récupérer l\'ID utilisateur de Moodle si disponible\n' +
+                    '                if (typeof M !== \'undefined\' && M.cfg && M.cfg.userid) {\n' +
+                    '                    return M.cfg.userid;\n' +
+                    '                }\n' +
+                    '                // Fallback à une valeur par défaut\n' +
+                    '                return \'studio-11\';\n' +
+                    '            }\n' +
+                    '\n' +
+                    '            const courseId = getCourseId();\n' +
+                    '            const textMediaId = getCurrentTextMediaId();\n' +
+                    '            const instanceId = textMediaId ? \'teams_textmedia_\' + textMediaId : null;\n' +
+                    '            const currentUser = getUserInfo();\n' +
+                    '            const currentDateTime = formatDate(new Date());\n' +
+                    '\n' +
+                    '            const debugInfo = {\n' +
+                    '                courseId,\n' +
+                    '                textMediaId,\n' +
+                    '                instanceId,\n' +
+                    '                currentUser,\n' +
+                    '                currentDateTime\n' +
+                    '            };\n' +
+                    '            console.log(\'Debug Info:\', debugInfo);\n' +
+                    '\n' +
+                    '            if (courseId && instanceId) {\n' +
+                    '                // Définir les hauteurs en fonction des états de l\'iframe\n' +
+                    '                const NORMAL_HEIGHT = 250; // Hauteur normale (lien Teams affiché)\n' +
+                    '                const MODAL_HEIGHT = 600; // Hauteur avec fenêtre modale ouverte\n' +
+                    '                const MIN_HEIGHT = 200; // Hauteur minimale absolue\n' +
+                    '\n' +
+                    '                document.write(`\n' +
+                    '                    <iframe id="${instanceId}" \n' +
+                    '                            class="teams-frame"\n' +
+                    '                            src="/ifen_html/teamslink/index3.php?courseid=${courseId}&iframe_id=${instanceId}&user=${encodeURIComponent(currentUser)}&datetime=${encodeURIComponent(currentDateTime)}" \n' +
+                    '                            style="width: 100%; height: ${NORMAL_HEIGHT}px; border: none; overflow: hidden; transition: height 0.3s ease-in-out;" \n' +
+                    '                            scrolling="no">\n' +
+                    '                    </iframe>\n' +
+                    '                `);\n' +
+                    '\n' +
+                    '                // Gestionnaire d\'événements pour ajuster la hauteur de l\'iframe\n' +
+                    '                window.addEventListener(\'message\', function(event) {\n' +
+                    '                    if (event.data && event.data.type === \'setHeight\') {\n' +
+                    '                        const iframe = document.getElementById(instanceId);\n' +
+                    '                        if (iframe) {\n' +
+                    '                            // Récupérer la hauteur depuis le message\n' +
+                    '                            let newHeight = event.data.height;\n' +
+                    '\n' +
+                    '                            // Vérifier si la hauteur est explicitement définie pour un modal\n' +
+                    '                            if (newHeight >= MODAL_HEIGHT) {\n' +
+                    '                                // Si la fenêtre modale est ouverte, utiliser sa hauteur\n' +
+                    '                                newHeight = Math.max(newHeight, MODAL_HEIGHT);\n' +
+                    '                                console.log(`Hauteur iframe ajustée pour modal: ${newHeight}px`);\n' +
+                    '                            } else {\n' +
+                    '                                // Sinon, assurer une hauteur minimale\n' +
+                    '                                newHeight = Math.max(newHeight, MIN_HEIGHT);\n' +
+                    '                                console.log(`Hauteur iframe ajustée normale: ${newHeight}px`);\n' +
+                    '                            }\n' +
+                    '\n' +
+                    '                            // Appliquer la nouvelle hauteur avec une transition fluide\n' +
+                    '                            iframe.style.height = newHeight + \'px\';\n' +
+                    '\n' +
+                    '                            // Informer Moodle du changement de taille\n' +
+                    '                            setTimeout(function() {\n' +
+                    '                                window.dispatchEvent(new Event(\'resize\'));\n' +
+                    '                                if (typeof M !== \'undefined\' && M.util && M.util.pending_js) {\n' +
+                    '                                    M.util.js_pending(\'resize\');\n' +
+                    '                                    M.util.js_complete(\'resize\');\n' +
+                    '                                }\n' +
+                    '                            }, 300);\n' +
+                    '                        }\n' +
+                    '                    }\n' +
+                    '                });\n' +
+                    '\n' +
+                    '                // Debug: Vérifier si l\'iframe a été créé correctement\n' +
+                    '                setTimeout(() => {\n' +
+                    '                    const iframe = document.getElementById(instanceId);\n' +
+                    '                    console.log(\'Iframe créé:\', {\n' +
+                    '                        exists: !!iframe,\n' +
+                    '                        id: instanceId,\n' +
+                    '                        src: iframe ? iframe.src : \'N/A\',\n' +
+                    '                        height: iframe ? iframe.style.height : \'N/A\'\n' +
+                    '                    });\n' +
+                    '                }, 100);\n' +
+                    '            } else {\n' +
+                    '                const error = \'Erreur : \' + (!courseId ? \'ID du cours manquant. \' : \'\') +\n' +
+                    '                    (!textMediaId ? \'ID du Text&Media manquant.\' : \'\');\n' +
+                    '                console.error(\'Erreur de configuration:\', error, debugInfo);\n' +
+                    '                document.write(`<p>${error}</p>`);\n' +
+                    '            }\n' +
+                    '        })();\n' +
+                    '    </script>\n' +
+                    '</div>';
+                
+                // Créer un indicateur directement visible mais qui sera automatiquement masqué
+                // lorsque l'utilisateur quittera le mode édition
+                var indicatorHtml = 
+                    '<div class="teams-indicator" style="background-color: #4b53bc; color: white; padding: 10px; margin: 10px 0; border-radius: 5px; display: inline-block;">' +
+                    '<strong>✓ Lien Teams ajouté avec succès</strong> - Enregistrez et quittez pour voir le résultat' +
+                    '<script>\n' +
+                    '(function() {\n' +
+                    '    // Fonction qui vérifie si nous sommes en mode édition\n' +
+                    '    function checkEditMode() {\n' +
+                    '        var url = window.location.href;\n' +
+                    '        var inModedit = url.indexOf("modedit.php") !== -1;\n' +
+                    '        var hasUpdateParam = url.indexOf("update=") !== -1;\n' +
+                    '        \n' +
+                    '        // Nous sommes en mode édition si l\'URL contient "modedit.php" OU le paramètre "update"\n' +
+                    '        return inModedit || hasUpdateParam;\n' +
+                    '    }\n' +
+                    '    \n' +
+                    '    // Fonction pour mettre à jour la visibilité des indicateurs\n' +
+                    '    function updateIndicators() {\n' +
+                    '        var isEditMode = checkEditMode();\n' +
+                    '        var indicators = document.querySelectorAll(".teams-indicator");\n' +
+                    '        \n' +
+                    '        indicators.forEach(function(indicator) {\n' +
+                    '            indicator.style.display = isEditMode ? "block" : "none";\n' +
+                    '        });\n' +
+                    '    }\n' +
+                    '    \n' +
+                    '    // Exécuter immédiatement\n' +
+                    '    updateIndicators();\n' +
+                    '    \n' +
+                    '    // Aussi vérifier périodiquement (pour les cas où l\'URL change sans rechargement complet)\n' +
+                    '    setInterval(updateIndicators, 1000);\n' +
+                    '})();\n' +
+                    '</script>' +
+                    '</div>';
+                
+                // Insérer le HTML Teams suivi de l'indicateur
+                document.execCommand('insertHTML', false, teamsHtml + indicatorHtml);
+                
+                // Marquer le contenu comme mis à jour
+                this.markUpdated();
+            },
+            // Utiliser exactement la même approche que teamsmeeting
+            icon: 'icon',
+            iconComponent: 'atto_newteamslink',
+            buttonName: 'newteamslink',
+            title: 'insertteamslink'
+        });
+    }
+});
+
+}, '@VERSION@', {"requires": ["moodle-editor_atto-plugin"]});
